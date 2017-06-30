@@ -142,17 +142,3 @@ def test_parse_interaction_number():
     ]
     for arg, expected in examples:
         assert organize.parse_interaction_number(arg) == expected
-
-
-def test_set_interaction_number():
-    data = [
-        [0, 'Start', False],
-        [1, 'event', True],
-    ]
-    df = pd.DataFrame(data, columns=['time', 'events', 'nod']).set_index('time')
-
-    df = organize.set_interaction_index(df, 123)
-
-    assert len(df.index.levels) == 2
-    for index_value in df.index.get_level_values(0):
-        assert index_value == 123

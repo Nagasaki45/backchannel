@@ -20,7 +20,7 @@ SPEAKER_BEHAVIOUR_END = '(speak).trs'
 SPEAKER_EYE_END = 'S.eye.eaf'
 LISTENER_NOD_END = 'L.nod.eaf'
 REQUIRED_ENDINGS = [SPEAKER_BEHAVIOUR_END, SPEAKER_EYE_END, LISTENER_NOD_END]
-OUTFILE = 'data.csv'
+OUTFILE = 'data.hdf'
 
 
 def parse_sync_lines(lines):
@@ -73,7 +73,7 @@ def _partial_df(name, data):
             .set_index('time'))
 
 
-def organize_interaction_data(speaker_behaviour, speaker_eye, listener_nod):
+def interaction_data(speaker_behaviour, speaker_eye, listener_nod):
     """
     Given the content of the 3 files (list of lines) create a pd.DataFrame
     with the data.
@@ -88,14 +88,11 @@ def organize_interaction_data(speaker_behaviour, speaker_eye, listener_nod):
     )
 
 
-def organize_data(root_dir):
+def reorganize_data(root_dir):
     """
-    Traverse the datasets directory and build one big dataframe for all
-    properly annotated interactions.
+    Traverse the datasets directory and yield (interaction, pd.DataFrame)
+    for each properly annotated interaction.
     """
-
-    dfs = []
-
     for (dirpath, _dirnames, filenames) in os.walk(root_dir):
         try:
             found_files = find_needed_files(filenames)
@@ -108,7 +105,7 @@ def organize_data(root_dir):
         speaker_eye = _read_lines(dirpath, speaker_eye_f)
         listener_nod = _read_lines(dirpath, listener_nod_f)
 
-        df = organize_interaction_data(
+        df = interaction_data(
             speaker_behaviour,
             speaker_eye,
             listener_nod
@@ -119,11 +116,7 @@ def organize_data(root_dir):
             logging.debug(msg)
             continue
 
-        df = set_interaction_index(df, parse_interaction_number(dirpath))
-
-        dfs.append(df)
-
-    return pd.concat(dfs)
+        yield parse_interaction_number(dirpath), finalize(df)
 
 
 def _read_lines(dirpath, filename):
@@ -161,14 +154,12 @@ def parse_interaction_number(dirpath):
     return int(match.groups()[0])
 
 
-def set_interaction_index(df, interaction_number):
+def finalize(df):
     """
-    Add a top level index to the dataframe with the interaction number.
+    Fix dtypes and fill NaNs.
     """
-    df['interaction'] = interaction_number
-    return (df
-            .set_index('interaction', append=True)
-            .reorder_levels(['interaction', 'time']))
+    df.index = pd.to_timedelta(df.index, unit='s')
+    return df.fillna(method='ffill')
 
 
 def parse_args():
@@ -183,8 +174,11 @@ def main():
     args = parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
-    df = organize_data(args.datasets_dir)
-    df.to_csv(OUTFILE)
+
+    with pd.HDFStore(OUTFILE) as store:
+        for interaction, df in reorganize_data(args.datasets_dir):
+            key = '/interaction{:03}'.format(interaction)
+            store[key] = df
 
 
 if __name__ == '__main__':
