@@ -41,3 +41,9 @@ to train the agent. The columns are:
 
 Most of the cells will be N/A, because the time slots originate from 3
 different files. However, they can be forward-filled easily.
+
+## Running tests
+
+```bash
+py.test
+```
