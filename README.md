@@ -3,6 +3,12 @@
 This work is part of my UnSocialVR project (TODO reference).
 Here, I'm using the ICT Rapport Datasets to learn backchannel behaviours, and build a model to generate similar active listening responses in automated agents.
 
+## Requirements
+
+- python 3.6
+- pytest
+- pandas
+
 ## Datasets
 
 Before starting go and grab the data from [the official ICT Rapport Datasets webpage](http://rapport.ict.usc.edu/).
