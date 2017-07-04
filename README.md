@@ -6,9 +6,12 @@ Here, I'm using the ICT Rapport Datasets to learn backchannel behaviours, and bu
 ## Requirements
 
 - python 3.6
+- notebook
 - pytest
 - pandas
 - pytables
+- matplotlib
+- scikit-learn
 
 ## Datasets
 
@@ -37,6 +40,10 @@ The results are written to `data.hdf`, with interaction number as keys. The colu
 - speaker_behaviour (string).
 - speaker_eye (bool)
 - listener_nod (bool)
+
+## Training a model
+
+The model training is done in `training.ipynb`.
 
 ## Running tests
 
