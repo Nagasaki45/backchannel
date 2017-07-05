@@ -26,7 +26,6 @@ MAXLEN = 40
 STEP = 3
 NEURONS = 128
 BATCH_SIZE = 128
-DIVERSITIES = [0.2, 0.5, 1.0, 1.2]
 CHARS_TO_GENERATE = 400
 
 path = get_file('nietzsche.txt', origin='https://s3.amazonaws.com/text-datasets/nietzsche.txt')
@@ -64,16 +63,6 @@ model.add(Activation('softmax'))
 model.compile(loss='categorical_crossentropy', optimizer=RMSprop(lr=0.01))
 
 
-def sample(preds, temperature=1.0):
-    # helper function to sample an index from a probability array
-    preds = np.asarray(preds).astype('float64')
-    preds = np.log(preds) / temperature
-    exp_preds = np.exp(preds)
-    preds = exp_preds / np.sum(exp_preds)
-    probas = np.random.multinomial(1, preds, 1)
-    return np.argmax(probas)
-
-
 # train the model, output generated text after each iteration
 for iteration in itertools.count(1):
     print('~' * 50)
@@ -84,20 +73,17 @@ for iteration in itertools.count(1):
     start_index = random.randint(0, len(text) - MAXLEN - 1)
     sentence = text[start_index: start_index + MAXLEN]
     print(f'- Generating with seed: "{sentence}"')
+
     sentence = list(sentence)  # to characters for appending predictions
 
-    for diversity in DIVERSITIES:
+    for _ in range(CHARS_TO_GENERATE):
+        x = np.zeros((1, MAXLEN, len(chars)))
+        for t, char in enumerate(sentence[-MAXLEN:]):
+            x[0, t, char_indices[char]] = 1.
 
-        print(f'- diversity: {diversity}')
+        preds = model.predict(x, verbose=0)[0]
+        next_index = np.argmax(preds)
+        next_char = indices_char[next_index]
+        sentence.append(next_char)
 
-        for _ in range(CHARS_TO_GENERATE):
-            x = np.zeros((1, MAXLEN, len(chars)))
-            for t, char in enumerate(sentence[-MAXLEN:]):
-                x[0, t, char_indices[char]] = 1.
-
-            preds = model.predict(x, verbose=0)[0]
-            next_index = sample(preds, diversity)
-            next_char = indices_char[next_index]
-            sentence.append(next_char)
-
-        print(''.join(sentence))
+    print(''.join(sentence))
