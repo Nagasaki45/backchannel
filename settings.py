@@ -1,0 +1,4 @@
+RESAMPLING_PERIOD = 100  # millis
+WINDOW_SIZE = 30
+BEHAVIOURS = ('SpeechSilent', )
+FIGSIZE = (10, 6)
