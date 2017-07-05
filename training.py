@@ -90,7 +90,7 @@ def timeit(function, iterations):
     return time_passed / iterations * 1000
 
 
-def plot_data(df, *, title=None, figsize=FIGSIZE):
+def plot_data(df, *, title=None, figsize=settings.FIGSIZE):
     """
     Plot the (already prepared for training) interaction for investigation.
     """
