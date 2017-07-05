@@ -1,10 +1,9 @@
 """
-A set of utilities to help train the model.
+Utils for ML.
 """
 
-import time
+import random
 
-from keras.utils import to_categorical
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -60,34 +59,6 @@ def prepare_training_data(store, window_size=settings.WINDOW_SIZE):
     X = data[:, :-1]
     y = data[:, -1]
     return X, y
-
-
-def prepare_training_data_lstm(store, window_size=settings.WINDOW_SIZE):
-    """
-    Create the X and y arrays, ready for LSTM.
-    """
-    X, y = prepare_training_data(store, window_size=window_size)
-    return _reshape_data_for_lstm(X, y, window_size)
-
-
-def _reshape_data_for_lstm(X, y, window_size):
-    X = X.reshape(len(X), window_size, -1)  # -1 for unknown dimension.
-    y = y[:, np.newaxis]
-    y = to_categorical(y)  # 2 hot-ones columns for 0 and 1 categories.
-    return X, y
-
-
-def timeit(function, iterations):
-    """
-    Measure execution time per iteration.
-    """
-    time_passed = 0
-    for iteration in range(iterations):
-        start = time.time()
-        function()
-        end = time.time()
-        time_passed += end - start
-    return time_passed / iterations * 1000
 
 
 def plot_data(df, *, title=None, figsize=settings.FIGSIZE):
