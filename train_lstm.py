@@ -14,9 +14,6 @@ import pandas as pd
 
 import training
 
-NEURONS = 128
-BATCH_SIZE = 128
-
 
 print('Preparing data')
 with pd.HDFStore('data.hdf') as store:
@@ -24,8 +21,9 @@ with pd.HDFStore('data.hdf') as store:
 
 print('Build model')
 model = Sequential()
-model.add(layers.LSTM(NEURONS, input_shape=X.shape[1:]))
-model.add(layers.Dropout(0.5))
+model.add(layers.LSTM(128, input_shape=X.shape[1:], return_sequences=True))
+model.add(layers.LSTM(64, return_sequences=True))
+model.add(layers.LSTM(32))
 # 2 categories for 0 and 1. 'softmax' for classification.
 model.add(layers.Dense(2, activation='softmax'))
 model.compile(loss='categorical_crossentropy',
@@ -36,6 +34,6 @@ for iteration in itertools.count(1):
     print('~' * 50)
     print(f'- Iteration {iteration}')
 
-    model.fit(X, y, batch_size=BATCH_SIZE, epochs=1)
+    model.fit(X, y, batch_size=128, epochs=1)
 
     model.save('model_lstm.hdf')
