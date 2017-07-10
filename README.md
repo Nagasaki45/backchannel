@@ -10,6 +10,7 @@ Here, I'm using the ICT Rapport Datasets to learn backchannel behaviours, and bu
 - Download the datasets manually (see below) to, let's say, `mydata`.
 - Organize the datasets with `python organize.py mydata`.
 - Run `train.ipynb` to train, investigate, and persist the model.
+- Predict backchannels with `predict.py` or `server.py`.
 
 ## Datasets
 
@@ -43,6 +44,26 @@ The results are written to `data.hdf`, with interaction number as keys. The colu
 
 Train the ML model and see how it performs on test data.
 The model is pickled into `model.pickle`.
+
+## `predict.py`
+
+The main function, `predict`, handle the time window handling and invoke the model `predict` function.
+Some global variables should be handled manually.
+See the `prepare_data_for_prediction` function and the simple example in `server.py` for usage.
+
+## `server.py`
+
+Another way to predict backchannels, exposed as an HTTP server (by flask).
+
+- Run `python server.py`
+- From another console, if you have `requests` installed, you can check that this is working with:
+
+```python
+id = 0
+silence = 0
+gaze = 1
+requests.post('http://localhost:5000', json={id: [silence, gaze]}).text
+```
 
 ## Running tests
 
