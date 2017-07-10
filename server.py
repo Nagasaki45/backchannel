@@ -5,6 +5,7 @@ An http wrapper for the code in `predict.py`.
 import pickle
 
 from flask import Flask, request
+from flask.ext.runner import Runner
 import numpy as np
 
 import predict
@@ -17,6 +18,7 @@ with open('model.pickle', 'rb') as f:
 data = {}
 
 app = Flask(__name__)
+runner = Runner(app)
 
 
 @app.route('/', methods=['POST'])
@@ -32,4 +34,4 @@ def backchannel_handler():
 
 
 if __name__ == '__main__':
-    app.run()
+    runner.run()
