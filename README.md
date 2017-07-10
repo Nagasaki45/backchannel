@@ -9,8 +9,7 @@ Here, I'm using the ICT Rapport Datasets to learn backchannel behaviours, and bu
 - Activate environment `source activate backchannel`.
 - Download the datasets manually (see below) to, let's say, `mydata`.
 - Organize the datasets with `python organize.py mydata`.
-- `python train.py`
-- You can inspect the results in the `model_inspection` notebook.
+- Run `train.ipynb` to train, investigate, and persist the model.
 
 ## Datasets
 
@@ -40,13 +39,10 @@ The results are written to `data.hdf`, with interaction number as keys. The colu
 - `speaker_eye` (bool)
 - `listener_nod` (bool)
 
-## `train.py`
+## `train.ipynb`
 
-Train the ML model, which is pickled into `model.pickle`.
-
-## `model_inspection.ipynb`
-
-See how the model generate prediction on real examples.
+Train the ML model and see how it performs on test data.
+The model is pickled into `model.pickle`.
 
 ## Running tests
 
