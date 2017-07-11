@@ -53,8 +53,7 @@ def predict(clf, data, ids, samples, timestamp=None):
 
 def update_data(data, id_, sample, timestamp):
     """
-    Get or create the pd.DataFrame, add the sample, and FIXME
-    remove old data.
+    Get or create the pd.DataFrame, add the sample, and remove old data.
     """
     try:
         df = data[id_]
