@@ -2,6 +2,7 @@
 An http wrapper for the code in `predict.py`.
 """
 
+import json
 import pickle
 
 from flask import Flask, request
@@ -23,14 +24,15 @@ runner = Runner(app)
 
 @app.route('/', methods=['POST'])
 def backchannel_handler():
-    json = request.json
+    new_data = request.json
     ids = []
     samples = []
-    for key, value in json.items():
+    for key, value in new_data.items():
         ids.append(int(key))
         samples.append(value)
-    response = predict.predict(clf, data, ids, np.array(samples))
-    return ','.join(str(x) for x in response)
+    predictions = predict.predict(clf, data, ids, np.array(samples))
+    # tolist to fix serialization issue http://bugs.python.org/issue18303
+    return json.dumps(dict(zip(ids, predictions.tolist())))
 
 
 if __name__ == '__main__':
