@@ -97,5 +97,6 @@ def test_no_input_data_bug():
     """
     Don't crash if the input data is empty, just respond empty results.
     """
-    prediction = predict.predict({}, [], [])
+    clf = mock.Mock()
+    prediction = predict.predict(clf, {}, [], [])
     assert len(prediction) == 0
