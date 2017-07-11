@@ -47,6 +47,11 @@ def prepare_data_for_prediction(data, ids, samples, timestamp=None):
 
 
 def predict(clf, data, ids, samples, timestamp=None):
+    assert len(ids) == len(samples), 'ids and samples must be of sample length'
+
+    if len(ids) == 0:
+        return np.array([])
+
     X = prepare_data_for_prediction(data, ids, samples, timestamp)
     return clf.predict(X)
 

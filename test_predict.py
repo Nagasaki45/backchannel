@@ -91,3 +91,11 @@ def test_bug_in_X_shape():
     samples = np.array([[1, 10, 100]])
 
     predict.prepare_data_for_prediction(data, ids, samples)
+
+
+def test_no_input_data_bug():
+    """
+    Don't crash if the input data is empty, just respond empty results.
+    """
+    prediction = predict.predict({}, [], [])
+    assert len(prediction) == 0
