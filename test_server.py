@@ -17,3 +17,4 @@ def test_server_not_completely_broken():
     speaker_gaze = 1
     url = flask.url_for('backchannel_handler', _external=True)
     resp = requests.post(url, json={id_: [speaker_silent, speaker_gaze]})
+    assert resp.status_code == 200

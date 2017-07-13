@@ -162,5 +162,5 @@ class BackchannelPredictor:
 
     def predict(self, ids, samples):
         new_state, predictions = predict(self._state, self.clf, ids, samples)
-        self._state = new_State
+        self._state = new_state
         return predictions
