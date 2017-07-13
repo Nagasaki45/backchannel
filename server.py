@@ -33,7 +33,6 @@ def backchannel_handler():
         ids.append(int(key))
         samples.append(value)
     predictions = predictor.predict(ids, np.array(samples), type_=type_)
-    print(predictions)
     return json.dumps(dict(zip(ids, predictions)))
 
 
