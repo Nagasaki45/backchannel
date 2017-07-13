@@ -8,23 +8,28 @@ import pandas as pd
 import settings
 
 
-def prepare_data_for_prediction(data, ids, samples, timestamp=None):
+def new_state():
+    """
+    Get an initial empty state.
+    """
+    return {}
+
+
+def prepare_data_for_prediction(state, ids, samples, timestamp=None):
     """
     Prepare new data for feeding the model. Simplify working with multiple
     listeners in the same call, to speed up the prediction process.
 
-    `data`: a dict of ID (int) to pd.Dataframe, indexed by time. DATA IS
-            MUTATED IN PLACE.
+    `state`: an internal state. Get an initial one with `new_state`.
     `ids`: a list of numbers representing the IDs of the listeners to
            generate backchannels for.
-    `samples`: a list of feature vectors in the same length as `ids`. For each
-               ID, these features are stacked to the end of the table in `data`,
-               which is then resampled and sent the model to generate
-               a prediction.
+    `samples`: a list of feature vectors in the same length as `ids`.
     `timestamp`: a way to specify the timestamp of the current sample, instead
                  of using current time.
 
-    Returns: an X vector with one row per ID.
+    Returns: a `{state, X}` tuple with `state` being an internal state that
+             should pass to future calls and `X` being a vector with one
+             row per ID.
     """
     if timestamp is None:
         timestamp = pd.to_datetime('now')
@@ -32,9 +37,9 @@ def prepare_data_for_prediction(data, ids, samples, timestamp=None):
     X = np.zeros((len(ids), settings.WINDOW_SIZE * len(samples[0])))
 
     for (i, id_), sample in zip(enumerate(ids), samples):
-        update_data(data, id_, sample, timestamp)
+        state = update_state(state, id_, sample, timestamp)
 
-        values = (data[id_]
+        values = (state[id_]
                   .resample(f'{settings.RESAMPLING_PERIOD}L')
                   .first()
                   .ffill()
@@ -43,25 +48,65 @@ def prepare_data_for_prediction(data, ids, samples, timestamp=None):
 
         X[i, -len(values):] = values
 
-    return X
+    return state, X
 
 
-def predict(clf, data, ids, samples, timestamp=None):
+def predict(state, clf, ids, samples, type_='classifier'):
+    """
+    Predict backchannels for a list of active listeners in batch.
+
+    `state`: an internal state. Get an initial one with `empty_state`.
+    `clf`: a trained model.
+    `ids`: a list of numbers representing the IDs of the listeners to
+           generate backchannels for.
+    `samples`: a list of feature vectors in the same length as `ids`. For each
+               ID, these features are stacked to the end of the table in `data`,
+               which is then resampled and sent the model to generate
+               a prediction.
+    `type_`: one of `['classifier', 'proba', 'dekok']`. Defaults to
+             'classifier'.
+
+    # Types
+
+    - classifier: zeros and ones indicate backchannel predictions.
+    - proba: predicted probability for backchannel.
+    - dekok: a binary classifier that depends on probability estimation of
+             the model and varying threshold. The threshold starts at 1 and
+             is constantly decreasing, until the probability > threshold.
+             Then, a backchannel is predicted and the threashold resets to 1.
+             For more information see de Kok and Heylen 2012.
+
+    Returns: a `{state, yhat}` tuple with `state` being an internal state that
+             should pass to future calls and `yhat` being vector with one
+ prediction (int or float, depending on type) per ID.
+    """
     assert len(ids) == len(samples), 'ids and samples must be of sample length'
+    assert type_ in ['classifier', 'proba', 'dekok']
 
     if len(ids) == 0:
-        return np.array([])
+        return state, np.array([])
 
-    X = prepare_data_for_prediction(data, ids, samples, timestamp)
-    return clf.predict(X)
+    state, X = prepare_data_for_prediction(state, ids, samples)
+
+    if type_ == 'classifier':
+        yhat = clf.predict(X)
+    if type_ == 'proba':
+        yhat = clf.predict_proba(X)
+    if type_ == 'dekok':
+        yhat = dekok(state, ids, clf.predic_proba(X))
+
+    return state, yhat
 
 
-def update_data(data, id_, sample, timestamp):
+def update_state(state, id_, sample, timestamp):
     """
-    Get or create the pd.DataFrame, add the sample, and remove old data.
+    Update the state with a new sample manually, without generating a
+    prediction.
+
+    Returns a new state.
     """
     try:
-        df = data[id_]
+        df = state[id_]
     except KeyError:
         df = pd.DataFrame([sample], index=[timestamp])
     else:
@@ -69,4 +114,19 @@ def update_data(data, id_, sample, timestamp):
 
     millis_to_keep = settings.RESAMPLING_PERIOD * settings.WINDOW_SIZE
     up_to = timestamp - pd.to_timedelta(millis_to_keep, 'ms')
-    data[id_] = df.loc[up_to:]
+    state[id_] = df.loc[up_to:]
+    return state
+
+
+class BackchannelPredictor:
+    """
+    An OO wrapper around `new_state` and `predict` that maintain state.
+    """
+    def __init__(self, clf):
+        self.clf = clf
+        self._state = new_state()
+
+    def predict(self, ids, samples):
+        new_state, predictions = predict(self._state, self.clf, ids, samples)
+        self._state = new_State
+        return predictions

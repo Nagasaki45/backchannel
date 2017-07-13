@@ -26,7 +26,7 @@ def test_prepare_data_for_prediction(settings_mock):
         [2, 20, 3, 30, 3, 30, 4, 40]
     ])
 
-    result = predict.prepare_data_for_prediction(data, [0], [sample], timestamp)
+    _, result = predict.prepare_data_for_prediction(data, [0], [sample], timestamp)
     np.testing.assert_equal(result, expected)
 
 
@@ -48,7 +48,7 @@ def test_prepare_data_for_prediction_not_enough_samples(settings_mock):
         [0, 0, 0, 0, 1, 10, 2, 20]
     ])
 
-    result = predict.prepare_data_for_prediction(data, [0], [sample], timestamp)
+    _, result = predict.prepare_data_for_prediction(data, [0], [sample], timestamp)
     np.testing.assert_equal(result, expected)
 
 
@@ -64,19 +64,19 @@ def test_prepare_data_for_prediction_id_not_in_data(settings_mock):
 
     expected = np.array([[0, 0, 1, 10]])
 
-    result = predict.prepare_data_for_prediction(data, ids, samples, timestamp)
+    _, result = predict.prepare_data_for_prediction(data, ids, samples, timestamp)
     np.testing.assert_equal(result, expected)
 
 
-def test_update_data_mutating_data_correctly():
-    data = {}
+def test_update_state_mutating_data_correctly():
+    state = predict.new_state()
     sample = np.array([1, 10])
     timestamp = pd.to_datetime('01.01.2000 00:00:01')
 
-    predict.update_data(data, 0, sample, timestamp)
+    state = predict.update_state(state, 0, sample, timestamp)
 
-    assert 0 in data
-    df = data[0]
+    assert 0 in state
+    df = state[0]
     assert len(df) == 1
     np.testing.assert_equal(df.loc[timestamp], sample)
 
@@ -97,6 +97,7 @@ def test_no_input_data_bug():
     """
     Don't crash if the input data is empty, just respond empty results.
     """
+    state = predict.new_state()
     clf = mock.Mock()
-    prediction = predict.predict(clf, {}, [], [])
+    _, prediction = predict.predict(state, clf, [], [])
     assert len(prediction) == 0

@@ -16,7 +16,7 @@ import predict
 with open('model.pickle', 'rb') as f:
     clf = pickle.load(f)
 
-data = {}
+predictor = predict.BackchannelPredictor(clf)
 
 app = Flask(__name__)
 runner = Runner(app)
@@ -30,7 +30,7 @@ def backchannel_handler():
     for key, value in new_data.items():
         ids.append(int(key))
         samples.append(value)
-    predictions = predict.predict(clf, data, ids, np.array(samples))
+    predictions = predictor.predict(ids, np.array(samples))
     # tolist to fix serialization issue http://bugs.python.org/issue18303
     return json.dumps(dict(zip(ids, predictions.tolist())))
 
