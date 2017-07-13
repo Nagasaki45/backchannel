@@ -25,14 +25,16 @@ runner = Runner(app)
 @app.route('/', methods=['POST'])
 def backchannel_handler():
     new_data = request.json
+    type_ = new_data.get('type')  # Not mandatory
+    listeners = new_data['listeners']
     ids = []
     samples = []
-    for key, value in new_data.items():
+    for key, value in listeners.items():
         ids.append(int(key))
         samples.append(value)
-    predictions = predictor.predict(ids, np.array(samples))
-    # tolist to fix serialization issue http://bugs.python.org/issue18303
-    return json.dumps(dict(zip(ids, predictions.tolist())))
+    predictions = predictor.predict(ids, np.array(samples), type_=type_)
+    print(predictions)
+    return json.dumps(dict(zip(ids, predictions)))
 
 
 if __name__ == '__main__':

@@ -51,7 +51,7 @@ def prepare_data_for_prediction(state, ids, samples, timestamp=None):
     return state, X
 
 
-def predict(state, clf, ids, samples, type_='classifier'):
+def predict(state, clf, ids, samples, type_=None):
     """
     Predict backchannels for a list of active listeners in batch.
 
@@ -81,7 +81,11 @@ def predict(state, clf, ids, samples, type_='classifier'):
  prediction (int or float, depending on type) per ID.
     """
     assert len(ids) == len(samples), 'ids and samples must be of sample length'
-    assert type_ in ['classifier', 'proba', 'dekok']
+
+    if type_ is None:
+        type_ = 'classifier'
+
+    assert type_ in ['classifier', 'proba', 'dekok'], f'Got {type_}'
 
     if len(ids) == 0:
         return state, np.array([])
@@ -89,11 +93,12 @@ def predict(state, clf, ids, samples, type_='classifier'):
     state, X = prepare_data_for_prediction(state, ids, samples)
 
     if type_ == 'classifier':
-        yhat = clf.predict(X)
+        # tolist to fix serialization issue http://bugs.python.org/issue18303
+        yhat = clf.predict(X).tolist()
     if type_ == 'proba':
-        yhat = clf.predict_proba(X)
+        yhat = clf.predict_proba(X).tolist()
     if type_ == 'dekok':
-        yhat = _dekok(state, ids, clf.predic_proba(X))
+        state, yhat = _dekok(state, ids, clf.predict_proba(X))
 
     return state, yhat
 
@@ -160,7 +165,9 @@ class BackchannelPredictor:
         self.clf = clf
         self._state = new_state()
 
-    def predict(self, ids, samples):
-        new_state, predictions = predict(self._state, self.clf, ids, samples)
+    def predict(self, ids, samples, type_=None):
+        new_state, predictions = predict(
+            self._state, self.clf, ids, samples, type_=type_
+        )
         self._state = new_state
         return predictions
