@@ -48,21 +48,35 @@ The model is pickled into `model.pickle`.
 ## `predict.py`
 
 The main function, `predict`, handle the time window handling and invoke the model `predict` function.
-Some global variables should be handled manually.
-See the `prepare_data_for_prediction` function and the simple example in `server.py` for usage.
+`Backchannel` is a simpler, OO interface, that handles the state for you.
 
 ## `server.py`
 
-Another way to predict backchannels, exposed as an HTTP server (by flask).
+Another way to predict backchannels, exposed as an HTTP server (by flask). Run `python server.py`.
 
-- Run `python server.py`
-- From another console, if you have `requests` installed, you can check that this is working with:
+From another console:
 
 ```python
-id = 0
-silence = 0
-gaze = 1
-requests.post('http://localhost:5000', json={id: [silence, gaze]}).text
+data = {
+    'listeners':
+    {
+        1: [0, 1],  # id: [speaker_silent, speaker_gaze]
+    },
+}
+requests.post('http://localhost:5000', json=j).text
+```
+
+To specify the prediction algorithm use:
+
+```python
+data = {
+    'type': 'dekok',  # Look here!
+    'listeners':
+    {
+        1: [0, 1],  # id: [speaker_silent, speaker_gaze]
+    },
+}
+requests.post('http://localhost:5000', json=j).text
 ```
 
 ## Running tests
