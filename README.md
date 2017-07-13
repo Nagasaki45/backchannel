@@ -54,9 +54,11 @@ The main function, `predict`, handle the time window handling and invoke the mod
 
 Another way to predict backchannels, exposed as an HTTP server (by flask). Run `python server.py`.
 
-From another console:
+Now, if you have requests installed, run this from another console:
 
 ```python
+import requests
+
 data = {
     'listeners':
     {
