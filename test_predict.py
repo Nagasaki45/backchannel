@@ -101,3 +101,47 @@ def test_no_input_data_bug():
     clf = mock.Mock()
     _, prediction = predict.predict(state, clf, [], [])
     assert len(prediction) == 0
+
+
+def test_dekok_first_prediction():
+    state = predict.new_state()
+    ids = [1]
+    probas = [0.5]  # Doesn't really matter
+    _, predictions = predict._dekok(state, ids, probas)
+    assert predictions == [0]
+
+
+def run_dekok_twice():
+    state = predict.new_state()
+    ids = [1]
+
+    # First one populate the state
+    timestamp = pd.to_datetime('01.01.2000 00:00:00')
+    state, predictions = predict._dekok(state, ids, [0.5], timestamp)
+
+    # After 1 second it should be positive
+    timestamp = pd.to_datetime('01.01.2000 00:00:01')
+    return predict._dekok(state, ids, [0.5], timestamp)
+
+
+@mock.patch('predict.settings')
+def test_dekok_predict_positive(settings_mock):
+    # Fall to DEKOK_DECREASE of the previous threshold each second
+    settings_mock.DEKOK_DECREASE = 0.4
+    _, predictions = run_dekok_twice()
+    assert predictions == [1]
+
+
+@mock.patch('predict.settings')
+def test_dekok_predict_negative(settings_mock):
+    settings_mock.DEKOK_DECREASE = 0.6
+    _, predictions = run_dekok_twice()
+    assert predictions == [0]
+
+
+@mock.patch('predict.settings')
+def test_dekok_positive_resets_the_threshold(settings_mock):
+    settings_mock.DEKOK_DECREASE = 0.4
+    state, _ = run_dekok_twice()  # should end up positive
+    _, threshold = state['thresholds'][1]
+    assert threshold == 1

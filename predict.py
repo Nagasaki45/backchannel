@@ -12,7 +12,7 @@ def new_state():
     """
     Get an initial empty state.
     """
-    return {}
+    return {'thresholds': {}}
 
 
 def prepare_data_for_prediction(state, ids, samples, timestamp=None):
@@ -93,9 +93,43 @@ def predict(state, clf, ids, samples, type_='classifier'):
     if type_ == 'proba':
         yhat = clf.predict_proba(X)
     if type_ == 'dekok':
-        yhat = dekok(state, ids, clf.predic_proba(X))
+        yhat = _dekok(state, ids, clf.predic_proba(X))
 
     return state, yhat
+
+
+def _dekok(state, ids, probas, timestamp=None):
+    """
+    Predict a backchannel if the probability is higher than a decreasing
+    threshold. When beckchannel is predicted the threshold resets to 1.
+    """
+    if timestamp is None:
+        timestamp = pd.to_datetime('now')
+
+    thresholds = state['thresholds']
+    predictions = []
+
+    for id_, proba in zip(ids, probas):
+
+        try:
+            old_timestamp, threshold = thresholds[id_]
+        except KeyError:  # First prediction for this id
+            prediction = 0
+            threshold = 1
+        else:
+            seconds_passed = (timestamp - old_timestamp).seconds
+            threshold *= settings.DEKOK_DECREASE ** seconds_passed
+            if proba > threshold:
+                prediction = 1
+                threshold = 1
+            else:
+                prediction = 0
+
+        predictions.append(prediction)
+        thresholds[id_] = (timestamp, threshold)
+
+    assert len(predictions) == len(ids)
+    return state, predictions
 
 
 def update_state(state, id_, sample, timestamp):
