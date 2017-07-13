@@ -19,6 +19,7 @@ with open('model.pickle', 'rb') as f:
 predictor = predict.BackchannelPredictor(clf)
 
 app = Flask(__name__)
+app.debug = True
 runner = Runner(app)
 
 

@@ -8,9 +8,7 @@ import server
 
 @pytest.fixture
 def app():
-    app = server.app
-    app.debug = True
-    return app
+    return server.app
 
 
 def test_server_not_completely_broken(client):

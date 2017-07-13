@@ -96,9 +96,11 @@ def predict(state, clf, ids, samples, type_=None):
         # tolist to fix serialization issue http://bugs.python.org/issue18303
         yhat = clf.predict(X).tolist()
     if type_ == 'proba':
-        yhat = clf.predict_proba(X).tolist()
+        proba = clf.predict_proba(X)[:, 1]
+        yhat = proba.tolist()
     if type_ == 'dekok':
-        state, yhat = _dekok(state, ids, clf.predict_proba(X))
+        proba = clf.predict_proba(X)[:, 1]
+        state, yhat = _dekok(state, ids, proba)
 
     return state, yhat
 
@@ -119,16 +121,16 @@ def _dekok(state, ids, probas, timestamp=None):
         try:
             old_timestamp, threshold = thresholds[id_]
         except KeyError:  # First prediction for this id
-            prediction = 0
+            prediction = False
             threshold = 1
         else:
             seconds_passed = (timestamp - old_timestamp).seconds
             threshold *= settings.DEKOK_DECREASE ** seconds_passed
             if proba > threshold:
-                prediction = 1
+                prediction = True
                 threshold = 1
             else:
-                prediction = 0
+                prediction = False
 
         predictions.append(prediction)
         thresholds[id_] = (timestamp, threshold)
