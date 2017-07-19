@@ -1,6 +1,6 @@
 # Automated backchannel behaviour
 
-This work is part of my UnsocialVR project (TODO reference).
+This work is part of my [UnsocialVR project](https://github.com/Nagasaki45/UnsocialVR).
 Here, I'm using the ICT Rapport Datasets to learn backchannel behaviours, and build a model to generate similar active listening responses in automated agents.
 
 ## Getting started
