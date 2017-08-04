@@ -1,3 +1,4 @@
+import math
 from unittest import mock
 
 import numpy as np
@@ -128,6 +129,8 @@ def run_dekok_twice():
 def test_dekok_predict_positive(settings_mock):
     # Fall to DEKOK_DECREASE of the previous threshold each second
     settings_mock.DEKOK_DECREASE = 0.4
+    settings_mock.MIN_THRESHOLD = 0
+    settings_mock.MAX_THRESHOLD = 1
     _, predictions = run_dekok_twice()
     assert predictions == [1]
 
@@ -135,6 +138,8 @@ def test_dekok_predict_positive(settings_mock):
 @mock.patch('predict.settings')
 def test_dekok_predict_negative(settings_mock):
     settings_mock.DEKOK_DECREASE = 0.6
+    settings_mock.MIN_THRESHOLD = 0
+    settings_mock.MAX_THRESHOLD = 1
     _, predictions = run_dekok_twice()
     assert predictions == [0]
 
@@ -142,6 +147,20 @@ def test_dekok_predict_negative(settings_mock):
 @mock.patch('predict.settings')
 def test_dekok_positive_resets_the_threshold(settings_mock):
     settings_mock.DEKOK_DECREASE = 0.4
+    settings_mock.MIN_THRESHOLD = 0
+    settings_mock.MAX_THRESHOLD = 1
     state, _ = run_dekok_twice()  # should end up positive
     _, threshold = state['thresholds'][1]
     assert threshold == 1
+
+
+def test_map_value():
+    cases = [
+        {'value': 1, 'min_': 0, 'max_': 1, 'expected': 1},
+        {'value': 1, 'min_': 0, 'max_': 0.5, 'expected': 0.5},
+        {'value': 0.5, 'min_': 0, 'max_': 0.5, 'expected': 0.25},
+        {'value': 0.5, 'min_': 0.1, 'max_': 0.5, 'expected': 0.3},
+    ]
+    for case in cases:
+        expected = case.pop('expected')
+        assert math.isclose(predict.map_value(**case), expected)

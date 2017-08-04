@@ -108,7 +108,7 @@ def predict(state, clf, ids, samples, type_=None):
 def _dekok(state, ids, probas, timestamp=None):
     """
     Predict a backchannel if the probability is higher than a decreasing
-    threshold. When beckchannel is predicted the threshold resets to 1.
+    threshold. When beckchannel is predicted the threshold resets.
     """
     if timestamp is None:
         timestamp = pd.to_datetime('now')
@@ -126,7 +126,12 @@ def _dekok(state, ids, probas, timestamp=None):
         else:
             seconds_passed = (timestamp - old_timestamp).seconds
             threshold *= settings.DEKOK_DECREASE ** seconds_passed
-            if proba > threshold:
+            scaled_threshold = map_value(
+                threshold,
+                settings.MIN_THRESHOLD,
+                settings.MAX_THRESHOLD,
+            )
+            if proba > scaled_threshold:
                 prediction = True
                 threshold = 1
             else:
@@ -137,6 +142,13 @@ def _dekok(state, ids, probas, timestamp=None):
 
     assert len(predictions) == len(ids)
     return state, predictions
+
+
+def map_value(value, min_, max_):
+    """
+    Map a value from 0-1 range to min_-max_ range.
+    """
+    return value * (max_ - min_) + min_
 
 
 def update_state(state, id_, sample, timestamp):
